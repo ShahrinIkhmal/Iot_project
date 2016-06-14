@@ -1,0 +1,69 @@
+#!/usr/bin/perl -w
+   
+   use SOAP::Transport::HTTP;
+     SOAP::Transport::HTTP::CGI
+       -> dispatch_to('Lights')
+       -> handle;
+
+   # Call as       -> uri('http://192.168.101.172/Lights')
+   #               -> proxy('http://192.168.101.172/cgi-bin/lights')
+   #               -> send("" , "")
+     package Lights;
+     sub send {
+
+   use Device::SerialPort ;
+   my $port = Device::SerialPort->new("/dev/ttyS0") ;
+
+   $port->baudrate(9600) ;    $port->parity("none") ;
+   $port->handshake("none") ; $port->databits(8) ;
+   $port->stopbits(1) ;       $port->read_char_time(0) ;
+   $port->read_const_time(1) ;
+
+   my ($class , $channel , $intensity ) = @_;
+
+  
+
+
+
+
+
+
+
+
+
+
+
+ # send data out
+   $port->write( pack "C", $channel ) ;
+   $port->write( pack "C", $intensity ) ;
+   sleep(1) ;
+
+   $port->close() ;
+
+       return "Done! I used $class with chn $channel and inten $intensity";
+     }
+
+	
+	## Kitchen Lights 
+
+	sub kitchen_lights
+		
+		# Kitchen lights only on if there is movement
+		if ( $in11 == 0 && $in11old == 1 && $kitchenlights == 0 )
+		{
+			$send_lights_soap(1,80) ;
+			$sned_lights_soap(1,130) ;
+			if ( $hour >= 9 && $hour <= 20 )
+			{
+				$send_lights_soap(1,170) ;
+				$sned_lights_soap(1,255) ;
+			}
+			$kitchenlights = 1 ; 
+		}
+
+		# Lights off when there is no movement for ten minutes 
+		if ( $epoch - $in11_lastmove > 600 && $kitchenlights == 1 ) 
+		{
+			$sned_lights_soap(1,0) ; 
+			$kitchenlights = 0 ;
+		}
